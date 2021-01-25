@@ -22,6 +22,11 @@ import time
 
 PI = 3.1415926535897
 
+global hit_wall_flag
+global go_home
+hit_wall_flag = False
+go_home = False
+
 class TurtleBot:
 
     def __init__(self):
@@ -48,6 +53,8 @@ class TurtleBot:
         self.pose.x = round(self.pose.x, 4)
         self.pose.y = round(self.pose.y, 4)
         self.pose.theta = round(self.pose.theta,4)
+
+
 
     def euclidean_distance(self, goal_pose):
         """Euclidean distance between current pose and the goal."""
@@ -106,7 +113,10 @@ class TurtleBot:
         else:
             goal_pose.x = move_x
             goal_pose.y = move_y
-            goal_pose.theta = goal_pose.theta
+            goal_pose.theta = self.steering_angle(goal_pose)
+
+
+        print("goal pose",goal_pose.x )
 
 
         #theta_goal_calc =
@@ -116,16 +126,21 @@ class TurtleBot:
         #goal_pose.theta = float(input("set your goal theta 0 is typ: "))
         # Please, insert a number slightly greater than 0 (e.g. 0.01).
         #distance_tolerance = float(input("Set your tolerance: "))
-        distance_tolerance = 0.01
+        distance_tolerance = 0.1
         vel_msg = Twist()
+        global hit_wall_flag
+        global go_home
 
-        while self.euclidean_distance(goal_pose) >= distance_tolerance:
+        hit_wall_flag = False
+        go_home = False
+
+        while self.euclidean_distance(goal_pose) >= distance_tolerance and hit_wall_flag == False :
 
             # Porportional controller.
             # https://en.wikipedia.org/wiki/Proportional_control
 
             # Linear velocity in the x-axis.
-            vel_msg.linear.x = self.linear_vel(goal_pose)
+            vel_msg.linear.x = 0.7 #self.linear_vel(goal_pose)
             vel_msg.linear.y = 0
             vel_msg.linear.z = 0
 
@@ -137,6 +152,19 @@ class TurtleBot:
             # Publishing our vel_msg
             self.velocity_publisher.publish(vel_msg)
             print("pose of the robot theta",self.pose.theta)
+            print("pose gen msg ",self.pose)
+
+            if((self.pose.x > 10.1 or self.pose.y > 10.1) and go_home == False):
+                print("wall")
+                hit_wall_flag = True
+                print("hit wall flag",hit_wall_flag)
+                print("go home? True go home, false dont",go_home )
+                go_home = True
+                print("I am going home",go_home)
+
+
+
+
             # Publish at the desired rate.
             self.rate.sleep()
 
@@ -145,6 +173,73 @@ class TurtleBot:
         vel_msg.angular.z = 0
         self.velocity_publisher.publish(vel_msg)
 
+
+    def move2home(self, move_x, move_y):
+
+
+
+        goal_pose = Pose()
+        if (move_x and move_y) == 0:
+            goal_pose.x = goal_pose.x
+            goal_pose.y = goal_pose.y
+            goal_pose.theta = goal_pose.theta
+
+        elif (move_x == 0 and move_y != 0):
+            goal_pose.x = goal_pose.x
+            goal_pose.y = move_y
+            goal_pose.theta = self.steering_angle(goal_pose)
+
+        elif (move_x != 0 and move_y == 0):
+            goal_pose.x = move_x
+            goal_pose.y = goal_pose.y
+            goal_pose.theta = goal_pose.theta
+
+        else:
+            goal_pose.x = move_x
+            goal_pose.y = move_y
+            goal_pose.theta = self.steering_angle(goal_pose)
+
+        print("goal pose", goal_pose.x)
+
+            # theta_goal_calc =
+            # Get the input from the user.
+            # goal_pose.x = float(input("Set your x goal: "))
+            # goal_pose.y = float(input("Set your y goal: "))
+            # goal_pose.theta = float(input("set your goal theta 0 is typ: "))
+            # Please, insert a number slightly greater than 0 (e.g. 0.01).
+            # distance_tolerance = float(input("Set your tolerance: "))
+        distance_tolerance = 0.1
+        vel_msg = Twist()
+
+        while self.euclidean_distance(goal_pose) >= distance_tolerance:
+
+                # Porportional controller.
+                # https://en.wikipedia.org/wiki/Proportional_control
+
+                # Linear velocity in the x-axis.
+            vel_msg.linear.x = 0.7  # self.linear_vel(goal_pose)
+            vel_msg.linear.y = 0
+            vel_msg.linear.z = 0
+
+                # Angular velocity in the z-axis.
+            vel_msg.angular.x = 0
+            vel_msg.angular.y = 0
+            vel_msg.angular.z = 0  # self.angular_vel(goal_pose)
+
+                # Publishing our vel_msg
+            self.velocity_publisher.publish(vel_msg)
+            print("pose of the robot theta", self.pose.theta)
+            print("pose gen msg ", self.pose)
+
+
+
+                # Publish at the desired rate.
+            self.rate.sleep()
+
+            # Stopping our robot after the movement is over.
+        vel_msg.linear.x = 0
+        vel_msg.angular.z = 0
+        self.velocity_publisher.publish(vel_msg)
 
         # If we press control + C, the node will stop.
        # rospy.spin()
@@ -334,6 +429,8 @@ if __name__ == '__main__':
         yaw_robot = 0
         global a, b
         global x_starting,y_starting
+
+
         #a = input("How long is the short side of your path")
         #b = input("how long is the long side of the path")
         # x_starting = input("How long is the short side of your path")
@@ -341,7 +438,7 @@ if __name__ == '__main__':
         # User input the path specs
         x_starting =1.0
         y_starting = 1.0
-        a = 5 # from left to right
+        a = 6 # from left to right
         b = 0.5 # from boot to top
         #move()
         #rotate()
@@ -359,7 +456,9 @@ if __name__ == '__main__':
         #move_y =
         x.move2goal(goal_x, goal_y)
         x.turn(float(0.0))
-        for turn in range(20):
+        turn_total = 20
+        turn = 0
+        while(turn<=20 ):
 
             if (turn % 2) == 0 or turn == 0:
                 if (x_count % 2 ==0 or x_count == 0):
@@ -384,27 +483,79 @@ if __name__ == '__main__':
                 y_count = y_count + 1
             print(goal_x, goal_y)
 
+            if (hit_wall_flag == True):
+                flag_input = input()
+                break
+                print("You hit a wall, in the loop we should head back up and then start again")
+                go_home = True
+                print(go_home)
+                new_starting_theta, new_goal_x, new_goal_y = x.getstarttheta()
+                print(new_starting_theta)
+                print(new_goal_x, new_goal_y)
+                # x.move2goal()
+                x.turn(float(new_starting_theta))
+                x.move2goal(new_goal_x, new_goal_y)
+                #x.turn(float(0.0))
+                turn_total = 20
+                rotate_count = 0
+                turn = 100
+
+                print(turn)
+
+
+
+
+
             print(turn)
             #testing_input = input()
 
 
             if (rotate_count ==0 or rotate_count ==2 ):
 
-                x.turn(float(90.0 * 2 * PI / 360))
+                x.turn(float(90.0 * 2 * PI / 360)) # north or up
 
             elif(rotate_count ==1):
 
-                x.turn(float(-180 * 2 * PI / 360))
+                x.turn(float(-180 * 2 * PI / 360)) # west or left
             elif(rotate_count ==3):
 
-                x.turn(float(-0 * 2 * PI / 360))
+                x.turn(float(-0 * 2 * PI / 360)) # East or right
 
             rotate_count =rotate_count +1
 
             if (rotate_count >= 4):
 
                 rotate_count = 0
+            print(goal_x)
 
+            turn = turn + 1
+
+        print("You hit a wall, out of loop")
+        new_starting_theta, new_goal_x, new_goal_y = x.getstarttheta()
+        print(new_starting_theta)
+        print(new_goal_x, new_goal_y)
+        # x.move2goal()
+        x.turn(float(new_starting_theta))
+            # move_x =
+            # move_y =
+        print("We are going thome and should go to location x, y", new_goal_x , new_goal_y)
+        x.move2home(new_goal_x, new_goal_y)
+        x.turn(float(0.0))
+        turn_total = 20
+        rotate_count = 0
+        turn = 0
+            #input_sense = input()
+            #if (goal_x or goal_y) > 10.1 or (goal_x or goal_y) < 0.01:
+                # need to fix this
+                #print("you have hit the wall, that is not good, we need to look at our options")
+                #starting_theta, goal_x, goal_y = x.getstarttheta()
+                #print(starting_theta)
+                #print(goal_x, goal_y)
+                # x.move2goal()
+                #x.turn(float(starting_theta))
+                # move_x =
+                # move_y =
+                #x.move2goal(goal_x, goal_y)
 
             #if (turn % 2) == 0 or turn == 0:
                # x.turn(float(90.0*2*PI/360))
@@ -413,11 +564,11 @@ if __name__ == '__main__':
                 #x.turn(float(-180.0*2*PI/360))
             #rotate()
 
-        starting_theta, goal_x, goal_y = x.getstarttheta()
-        print(starting_theta)
-        print(goal_x, goal_y)
+        #starting_theta, goal_x, goal_y = x.getstarttheta()
+        #print(starting_theta)
+        #print(goal_x, goal_y)
         # x.move2goal()
-        x.turn(float(starting_theta))
+        #x.turn(float(starting_theta))
 
     except rospy.ROSInterruptException:
         pass
