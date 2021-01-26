@@ -165,6 +165,7 @@ class TurtleBot:
 
 
 
+
             # Publish at the desired rate.
             self.rate.sleep()
 
@@ -438,7 +439,7 @@ if __name__ == '__main__':
         # User input the path specs
         x_starting =1.0
         y_starting = 1.0
-        a = 6 # from left to right
+        a = 12 # from left to right
         b = 0.5 # from boot to top
         #move()
         #rotate()
@@ -458,92 +459,123 @@ if __name__ == '__main__':
         x.turn(float(0.0))
         turn_total = 20
         turn = 0
-        while(turn<=20 ):
 
-            if (turn % 2) == 0 or turn == 0:
-                if (x_count % 2 ==0 or x_count == 0):
-                    goal_x = a + goal_x
+        mode_1 = True
+        mode_2 = False
+        stop_program = False
+
+        while(stop_program == False):
+
+            while(turn<=20 and mode_1 == True ):
+
+                if (turn % 2) == 0 or turn == 0:
+                    if (x_count % 2 ==0 or x_count == 0):
+                        goal_x = a + goal_x
+                    else:
+                        goal_x = -a + goal_x
+
+                    print(goal_x,goal_y)
+                    #input_user = input()
+                    #goal_x = a + goal_x
+                    goal_y = goal_y
+                    x.move2goal(goal_x, goal_y)
+                    x_count = x_count + 1
+
                 else:
-                    goal_x = -a + goal_x
+                    #print(goal_x,goal_y)
 
-                print(goal_x,goal_y)
-                #input_user = input()
-                #goal_x = a + goal_x
-                goal_y = goal_y
-                x.move2goal(goal_x, goal_y)
-                x_count = x_count + 1
+                    goal_x = goal_x
+                    goal_y = b + goal_y
+                    #print(goal_x, goal_y)
+                    x.move2goal(goal_x, goal_y)
+                    y_count = y_count + 1
+                print(goal_x, goal_y)
 
-            else:
-                #print(goal_x,goal_y)
+                if (hit_wall_flag == True):
+                   # flag_input = input()
 
-                goal_x = goal_x
-                goal_y = b + goal_y
-                #print(goal_x, goal_y)
-                x.move2goal(goal_x, goal_y)
-                y_count = y_count + 1
-            print(goal_x, goal_y)
+                    #print("You hit a wall, in the loop we should go home)
+                    go_home = True
+                    print(go_home)
+                    starting_theta, goal_x, goal_y = x.getstarttheta()
+                    print(starting_theta)
+                    print(goal_x, goal_y)
+                    # x.move2goal()
+                    x.turn(float(starting_theta))
+                    x.move2goal(goal_x, goal_y)
+                    #x.turn(float(0.0))
+                    turn_total = 20
+                    rotate_count = 0
+                    turn = 100
+                    x_count = 0
+                    y_count = 0
 
-            if (hit_wall_flag == True):
-                flag_input = input()
-                break
-                print("You hit a wall, in the loop we should head back up and then start again")
-                go_home = True
-                print(go_home)
-                new_starting_theta, new_goal_x, new_goal_y = x.getstarttheta()
-                print(new_starting_theta)
-                print(new_goal_x, new_goal_y)
-                # x.move2goal()
-                x.turn(float(new_starting_theta))
-                x.move2goal(new_goal_x, new_goal_y)
-                #x.turn(float(0.0))
-                turn_total = 20
-                rotate_count = 0
-                turn = 100
+                    mode_1 = False
+                    mode_2 = True
+                    print("mode_1",mode_1)
+
+                    print(turn)
+                    break
+
+
+
+
 
                 print(turn)
+                #testing_input = input()
 
 
+                if (rotate_count ==0 or rotate_count ==2 ):
 
+                    x.turn(float(90.0 * 2 * PI / 360)) # north or up
 
+                elif(rotate_count ==1):
 
-            print(turn)
-            #testing_input = input()
+                    x.turn(float(-180 * 2 * PI / 360)) # west or left
+                elif(rotate_count ==3):
 
+                    x.turn(float(-0 * 2 * PI / 360)) # East or right
 
-            if (rotate_count ==0 or rotate_count ==2 ):
+                rotate_count =rotate_count +1
 
-                x.turn(float(90.0 * 2 * PI / 360)) # north or up
+                if (rotate_count >= 4):
 
-            elif(rotate_count ==1):
+                    rotate_count = 0
+                print(goal_x)
 
-                x.turn(float(-180 * 2 * PI / 360)) # west or left
-            elif(rotate_count ==3):
+                turn = turn + 1
+                mode_2 = True
 
-                x.turn(float(-0 * 2 * PI / 360)) # East or right
-
-            rotate_count =rotate_count +1
-
-            if (rotate_count >= 4):
-
+            while(mode_2 == True):
+                print("You hit a wall, out of loop or you have fnished your pattern")
+                starting_theta, goal_x, goal_y = x.getstarttheta()
+                print(starting_theta)
+                print(goal_x, goal_y)
+                # x.move2goal()
+                x.turn(float(starting_theta))
+                # move_x =
+                # move_y =
+                print("We are going thome and should go to location x, y", goal_x , goal_y)
+                x.move2home(goal_x, goal_y)
+                x.turn(float(0.0))
+                turn_total = 20
                 rotate_count = 0
-            print(goal_x)
+                turn = 0
+                x_count = 0
+                y_count = 0
+                print("We need to edit the length and the width of the pattern")
+                print("a = ",a)
+                print("b = ",b)
+                print("We recomend a home postion of 1,1 and a < 10- home_x and b <10 - home_y (0.5) is good ")
+                a = float(input("What value of a would you like now? "))
+                b = float(input("What value of b would you like now? "))
+                mode_1 = True
+                mode_2 = False
+                print("mode_1 : ",mode_1)
 
-            turn = turn + 1
 
-        print("You hit a wall, out of loop")
-        new_starting_theta, new_goal_x, new_goal_y = x.getstarttheta()
-        print(new_starting_theta)
-        print(new_goal_x, new_goal_y)
-        # x.move2goal()
-        x.turn(float(new_starting_theta))
-            # move_x =
-            # move_y =
-        print("We are going thome and should go to location x, y", new_goal_x , new_goal_y)
-        x.move2home(new_goal_x, new_goal_y)
-        x.turn(float(0.0))
-        turn_total = 20
-        rotate_count = 0
-        turn = 0
+
+
             #input_sense = input()
             #if (goal_x or goal_y) > 10.1 or (goal_x or goal_y) < 0.01:
                 # need to fix this
